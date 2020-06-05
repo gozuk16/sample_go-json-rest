@@ -1,10 +1,12 @@
 package main
 
 import (
-    "github.com/ant0ine/go-json-rest/rest"
+    "github.com/gozuk16/go-json-rest/rest"
     "log"
     "fmt"
+    "os"
     "os/exec"
+    "io/ioutil"
     "net/http"
     "time"
 )
@@ -36,6 +38,7 @@ func main() {
 			w.WriteJson(statusMw.GetStatus())
 		}),
 		rest.Get("/dir", getDirs),
+		rest.Get("/redirect", redirect),
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -64,4 +67,16 @@ func getDirs(w rest.ResponseWriter, r *rest.Request) {
 		result = fmt.Sprintf("%s", out)
 	}
 	w.WriteJson(map[string]string{"ls":result})
+}
+
+func redirect(w rest.ResponseWriter, r *rest.Request) {
+	f, err := os.Open("example.json")
+	if err != nil{
+		fmt.Println("error")
+	}
+	defer f.Close()
+
+	b, err := ioutil.ReadAll(f)
+
+        w.Write(b)
 }
