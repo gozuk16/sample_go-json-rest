@@ -1,7 +1,9 @@
 package main
 
 import (
-    "github.com/gozuk16/go-json-rest/rest"
+    //"github.com/gozuk16/go-json-rest/rest"
+    "github.com/ant0ine/go-json-rest/rest"
+    "gopkg.in/tylerb/graceful.v1"
     "log"
     "fmt"
     "os"
@@ -39,13 +41,36 @@ func main() {
 		}),
 		rest.Get("/dir", getDirs),
 		rest.Get("/redirect", redirect),
+		rest.Get("/stop", func(w rest.ResponseWriter, req *rest.Request) {
+			for cpt := 1; cpt <= 3; cpt++ {
+
+				time.Sleep(time.Duration(1) * time.Second)
+
+				w.WriteJson(map[string]string{
+					"Message": fmt.Sprintf("%d seconds", cpt),
+				})
+				w.(http.ResponseWriter).Write([]byte("\n"))
+
+				// Flush the buffer to client
+				w.(http.Flusher).Flush()
+			}
+			os.Exit(0)
+		}),
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	api.SetApp(router)
 
-	log.Fatal(http.ListenAndServe(":8080", api.MakeHandler()))
+	server := &graceful.Server{
+		Timeout: 10 * time.Second,
+		Server: &http.Server{
+			Addr:    ":8010",
+			Handler: api.MakeHandler(),
+		},
+	}
+	log.Fatal(server.ListenAndServe())
 }
 
 func hello(w rest.ResponseWriter, r *rest.Request) {
@@ -78,5 +103,6 @@ func redirect(w rest.ResponseWriter, r *rest.Request) {
 
 	b, err := ioutil.ReadAll(f)
 
-        w.Write(b)
+	w.(http.ResponseWriter).Write(b)
+        //w.Write(b)
 }
