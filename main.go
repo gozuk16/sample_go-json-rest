@@ -1,23 +1,25 @@
 package main
 
 import (
-    //"github.com/gozuk16/go-json-rest/rest"
-    "github.com/ant0ine/go-json-rest/rest"
-    "gopkg.in/tylerb/graceful.v1"
-    "log"
-    "fmt"
-    "os"
-    "os/exec"
-    "io/ioutil"
-    "net/http"
-    "time"
+	//"github.com/gozuk16/go-json-rest/rest"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
+	"os/exec"
+	"time"
+
+	"github.com/ant0ine/go-json-rest/rest"
+	"github.com/gozuk16/mylib"
+	"gopkg.in/tylerb/graceful.v1"
 )
 
 type Health struct {
-	Name string
-	Version string
+	Name      string
+	Version   string
 	StartTime string
-	Now string
+	Now       string
 }
 
 const datetimeFormat string = "2006/01/02 15:04:05.000"
@@ -40,6 +42,7 @@ func main() {
 			w.WriteJson(statusMw.GetStatus())
 		}),
 		rest.Get("/dir", getDirs),
+		rest.Get("/mem", getMem),
 		rest.Get("/redirect", redirect),
 		rest.Get("/stop", func(w rest.ResponseWriter, req *rest.Request) {
 			for cpt := 1; cpt <= 3; cpt++ {
@@ -74,13 +77,13 @@ func main() {
 }
 
 func hello(w rest.ResponseWriter, r *rest.Request) {
-        w.WriteJson(map[string]string{"Body": "Hello World!"})
+	w.WriteJson(map[string]string{"Body": "Hello World!"})
 }
 
 func getHealth(w rest.ResponseWriter, r *rest.Request) {
 	now := time.Now().Format(datetimeFormat)
 	h := Health{Name: "sample_go-json-rest", Version: version, StartTime: startTime, Now: now}
-        w.WriteJson(h)
+	w.WriteJson(h)
 }
 
 func getDirs(w rest.ResponseWriter, r *rest.Request) {
@@ -91,12 +94,17 @@ func getDirs(w rest.ResponseWriter, r *rest.Request) {
 	} else {
 		result = fmt.Sprintf("%s", out)
 	}
-	w.WriteJson(map[string]string{"ls":result})
+	w.WriteJson(map[string]string{"ls": result})
+}
+
+func getMem(w rest.ResponseWriter, r *rest.Request) {
+	//w.WriteJson(map[string]string{"mem": mylib.Mem()})
+	w.(http.ResponseWriter).Write(mylib.Mem())
 }
 
 func redirect(w rest.ResponseWriter, r *rest.Request) {
 	f, err := os.Open("example.json")
-	if err != nil{
+	if err != nil {
 		fmt.Println("error")
 	}
 	defer f.Close()
@@ -104,5 +112,5 @@ func redirect(w rest.ResponseWriter, r *rest.Request) {
 	b, err := ioutil.ReadAll(f)
 
 	w.(http.ResponseWriter).Write(b)
-        //w.Write(b)
+	//w.Write(b)
 }
